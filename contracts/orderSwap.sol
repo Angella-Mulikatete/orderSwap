@@ -21,7 +21,7 @@ contract OrderSwap is Ownable{
     constructor() Ownable(msg.sender){}
 
     mapping(address => uint256[]) public orderIds;//list of order IDs for each token(address) for order tracking. token => id
-    mapping (address => mapping(address => uint256)) balances; // store balance of the token for @ depositor [tokenAddres][]
+    mapping (address => mapping(address => uint256)) public balances; // store balance of the token for @ depositor [tokenAddres][]
    // mapping(address =>mapping(uint256 => order)) orders; //track oredrs for @ token by address and orderId, [user][tokenAddress]
      mapping(uint256 => order) public orders;
 
@@ -31,10 +31,16 @@ contract OrderSwap is Ownable{
 
 
 //deposit token to the contract
-    function depositTokens(address _tokenAddress, uint256 _amount) external {
+    function depositTokens(address _tokenAddress, uint256 _amount) external  {
         IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
-        balances[msg.sender][_tokenAddress] += _amount;
+          balances[msg.sender][_tokenAddress] += _amount;
+      
     } 
+
+    // Public function to check balances
+    function getBalance(address depositor, address tokenAddress) external view returns (uint256) {
+        return balances[depositor][tokenAddress];
+    }
 //uint256 orderId = orderIds[_tokenIn].length;
 //orderIds[_tokenIn].push(orderId);
     function createOrder(address _tokenIn,address _expectedToken,uint256 _amountIn, uint256 _expectedAmount,uint256 _deadline) external returns(uint256){
@@ -42,13 +48,12 @@ contract OrderSwap is Ownable{
         orderCount++;
         uint256 orderId = orderCount;
         orderIds[_tokenIn].push(orderId);
-        orderIds[_expectedToken].push(orderId);
+        // orderIds[_expectedToken].push(orderId);
 
         require(balances[msg.sender][_tokenIn] >= _amountIn, "Insufficient token balance");
         require(_deadline > block.timestamp, "Invalid expiration time");
         require(_amountIn > 0 && _expectedAmount > 0, "Invalid amounts");
-        orderCount++;
-        // uint256 orderId = orderCount;
+        
         orders[orderId] = order({
             depositor: msg.sender,
             tokenIn: _tokenIn,
